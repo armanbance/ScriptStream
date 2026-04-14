@@ -1,0 +1,13 @@
+/* index.css — global styles applied to the whole page */
+
+/* Remove default margin/padding so the page starts clean */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #ffffff;
+  color: #222;
+}

@@ -1,0 +1,49 @@
+/* App.css — styles for App.jsx only */
+
+/* Centers everything and gives it a readable max-width */
+.app {
+  max-width: 600px;
+  margin: 60px auto;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  padding: 0 20px;
+}
+
+/* The card wraps the interactive counter */
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 24px;
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Simple button styles */
+button {
+  padding: 8px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #aaa;
+  background: #f0f0f0;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #e0e0e0;
+}
+
+/* Small grey tip at the bottom */
+.hint {
+  color: #888;
+  font-size: 14px;
+}
+
+code {
+  background: #f4f4f4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
