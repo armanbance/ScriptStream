@@ -1,13 +1,48 @@
-/* index.css — global styles applied to the whole page */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap');
 
-/* Remove default margin/padding so the page starts clean */
+:root {
+  --bg: #fbfaf7;
+  --bg-elev: #f4f1ea;
+  --surface: rgba(0, 0, 0, 0.025);
+  --surface-strong: rgba(0, 0, 0, 0.05);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --text-faint: #9a9a9a;
+  --accent: #b45309;
+  --accent-strong: #92400e;
+  --accent-soft: rgba(180, 83, 9, 0.08);
+  --accent-glow: rgba(180, 83, 9, 0.18);
+  --ring: #d97706;
+
+  --font-heading: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Work Sans', system-ui, sans-serif;
+
+  color-scheme: light;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html, body, #root {
+  min-height: 100dvh;
+}
+
 body {
-  background: #ffffff;
-  color: #222;
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
