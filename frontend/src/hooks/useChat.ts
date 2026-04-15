@@ -9,7 +9,7 @@ export interface ChatMessage {
   content: string
 }
 
-export function useChat() {
+export function useChat(creatorUsername: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isThinking, setIsThinking] = useState(false)
 
@@ -26,7 +26,7 @@ export function useChat() {
     setIsThinking(true)
 
     try {
-      const reply = await generateScript(trimmed)
+      const reply = await generateScript(trimmed, creatorUsername)
       setMessages((prev) => [
         ...prev,
         { id: crypto.randomUUID(), role: 'assistant', content: reply },
@@ -45,7 +45,7 @@ export function useChat() {
     } finally {
       setIsThinking(false)
     }
-  }, [])
+  }, [creatorUsername])
 
   return { messages, isThinking, send }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { Editor } from './components/Editor'
@@ -9,11 +9,22 @@ import { SettingsPage } from './components/SettingsPage'
 import { useWordCount } from './hooks/useWordCount'
 import { useChat } from './hooks/useChat'
 import { appendToText } from './lib/insertAtCursor'
-import type { Doc } from './types'
+import type { Doc, Settings } from './types'
 import './App.css'
 
 const MIN_CHAT = 320
 const MAX_CHAT = 520
+
+const SETTINGS_KEY = 'scriptstream-settings'
+const DEFAULT_SETTINGS: Settings = { creatorUsername: '' }
+
+function loadSettings(): Settings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY)
+    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+  } catch { /* ignore corrupt data */ }
+  return DEFAULT_SETTINGS
+}
 
 const INITIAL_DOCS: Doc[] = [
   {
@@ -34,6 +45,15 @@ function App() {
   const [view, setView] = useState<'editor' | 'settings'>('editor')
   const [chatWidth, setChatWidth] = useState(400)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [settings, setSettings] = useState<Settings>(loadSettings)
+
+  const handleSettingsChange = useCallback((patch: Partial<Settings>) => {
+    setSettings((prev) => {
+      const next = { ...prev, ...patch }
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
 
   const currentDoc = useMemo(
     () => docs.find((d) => d.id === currentDocId) ?? docs[0],
@@ -41,7 +61,7 @@ function App() {
   )
 
   const { words, chars, readMinutes } = useWordCount(currentDoc?.content ?? '')
-  const { messages, isThinking, send } = useChat()
+  const { messages, isThinking, send } = useChat(settings.creatorUsername)
 
   const editorRef = useRef<HTMLTextAreaElement>(null)
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
@@ -109,6 +129,7 @@ function App() {
         docs={docs}
         currentDocId={currentDocId}
         view={view}
+        creatorUsername={settings.creatorUsername}
         onSelectDoc={handleSelectDoc}
         onNewDoc={handleNewDoc}
         onOpenSettings={() => setView('settings')}
@@ -151,7 +172,7 @@ function App() {
             />
           </>
         ) : (
-          <SettingsPage />
+          <SettingsPage settings={settings} onSettingsChange={handleSettingsChange} />
         )}
       </div>
     </div>

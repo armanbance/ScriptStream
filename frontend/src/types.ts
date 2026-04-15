@@ -3,3 +3,7 @@ export interface Doc {
   title: string
   content: string
 }
+
+export interface Settings {
+  creatorUsername: string
+}

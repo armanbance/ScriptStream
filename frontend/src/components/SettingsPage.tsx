@@ -1,4 +1,11 @@
-export function SettingsPage() {
+import type { Settings } from '../types'
+
+interface SettingsPageProps {
+  settings: Settings
+  onSettingsChange: (patch: Partial<Settings>) => void
+}
+
+export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) {
   return (
     <div className="settings-page">
       <div className="settings-inner">
@@ -9,6 +16,14 @@ export function SettingsPage() {
 
         <section className="settings-section">
           <h2>Profile</h2>
+          <div className="settings-row">
+            <label>Creator Username</label>
+            <input
+              value={settings.creatorUsername}
+              onChange={(e) => onSettingsChange({ creatorUsername: e.target.value })}
+              placeholder="your-username"
+            />
+          </div>
           <div className="settings-row">
             <label>Name</label>
             <input defaultValue="Arman Bance" />

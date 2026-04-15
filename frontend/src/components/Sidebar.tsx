@@ -6,6 +6,7 @@ interface SidebarProps {
   docs: Doc[]
   currentDocId: string
   view: 'editor' | 'settings'
+  creatorUsername: string
   onSelectDoc: (id: string) => void
   onNewDoc: () => void
   onOpenSettings: () => void
@@ -21,6 +22,7 @@ export function Sidebar({
   docs,
   currentDocId,
   view,
+  creatorUsername,
   onSelectDoc,
   onNewDoc,
   onOpenSettings,
@@ -35,7 +37,7 @@ export function Sidebar({
 
     setUpload({ state: 'uploading', name: file.name })
     try {
-      await uploadMedia(file)
+      await uploadMedia(file, creatorUsername)
       setUpload({ state: 'success', name: file.name })
       setTimeout(() => setUpload({ state: 'idle' }), 2500)
     } catch (err) {

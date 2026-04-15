@@ -6,27 +6,35 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-export interface ScriptGeneratorResponse {
-  response: string
+export interface GenerateScriptResponse {
+  script: string
 }
 
-export async function generateScript(query: string): Promise<string> {
-  const { data } = await api.post<ScriptGeneratorResponse>('/script_generator', {
-    query,
+export async function generateScript(
+  topic: string,
+  creatorUsername: string,
+): Promise<string> {
+  const { data } = await api.post<GenerateScriptResponse>('/generate-script', {
+    topic,
+    creator_username: creatorUsername,
   })
-  return data.response
+  return data.script
 }
 
-export interface MediaProcessorResponse {
+export interface UploadVideoResponse {
   message?: string
   [key: string]: unknown
 }
 
-export async function uploadMedia(file: File): Promise<MediaProcessorResponse> {
+export async function uploadMedia(
+  file: File,
+  creatorUsername: string,
+): Promise<UploadVideoResponse> {
   const form = new FormData()
   form.append('file', file)
-  const { data } = await api.post<MediaProcessorResponse>('/media_processor', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  form.append('creator_username', creatorUsername)
+  const { data } = await api.post<UploadVideoResponse>('/upload-video', form, {
+    headers: { 'Content-Type': undefined },
     timeout: 120000,
   })
   return data

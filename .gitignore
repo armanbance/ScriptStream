@@ -3,3 +3,10 @@ node_modules/
 dist/
 *.log
 .env
+
+# Python backend
+backend/venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
