@@ -6,17 +6,19 @@ import { ChatPanel } from './components/ChatPanel'
 import { StatusBar } from './components/StatusBar'
 import { ResizeHandle } from './components/ResizeHandle'
 import { SettingsPage } from './components/SettingsPage'
+import { ExplorePage } from './components/ExplorePage'
 import { useWordCount } from './hooks/useWordCount'
 import { useChat } from './hooks/useChat'
 import { appendToText } from './lib/insertAtCursor'
 import type { Doc, Settings } from './types'
 import './App.css'
 
+// chat panel width limits
 const MIN_CHAT = 320
 const MAX_CHAT = 520
 
 const SETTINGS_KEY = 'scriptstream-settings'
-const DEFAULT_SETTINGS: Settings = { creatorUsername: '' }
+const DEFAULT_SETTINGS: Settings = { creatorUsername: '', categoryId: null }
 
 function loadSettings(): Settings {
   try {
@@ -42,7 +44,7 @@ const INITIAL_DOCS: Doc[] = [
 function App() {
   const [docs, setDocs] = useState<Doc[]>(INITIAL_DOCS)
   const [currentDocId, setCurrentDocId] = useState<string>(INITIAL_DOCS[0].id)
-  const [view, setView] = useState<'editor' | 'settings'>('editor')
+  const [view, setView] = useState<'editor' | 'settings' | 'explore'>('editor')
   const [chatWidth, setChatWidth] = useState(400)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [settings, setSettings] = useState<Settings>(loadSettings)
@@ -55,6 +57,7 @@ function App() {
     })
   }, [])
 
+  // get the current doc based on id, fall back to first doc just in case
   const currentDoc = useMemo(
     () => docs.find((d) => d.id === currentDocId) ?? docs[0],
     [docs, currentDocId]
@@ -67,6 +70,7 @@ function App() {
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
   const firstChange = useRef(true)
 
+  // auto-save indicator
   useEffect(() => {
     if (firstChange.current) {
       firstChange.current = false
@@ -77,6 +81,7 @@ function App() {
     return () => clearTimeout(t)
   }, [docs])
 
+  // keyboard shortcuts - cmd+j to focus chat, esc to go back to editor
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey
@@ -98,6 +103,7 @@ function App() {
     )
   }
 
+  // add new doc and switch to it
   const handleNewDoc = () => {
     const newDoc: Doc = {
       id: crypto.randomUUID(),
@@ -133,10 +139,11 @@ function App() {
         onSelectDoc={handleSelectDoc}
         onNewDoc={handleNewDoc}
         onOpenSettings={() => setView('settings')}
+        onOpenExplore={() => setView('explore')}
       />
 
       <div className="app-main">
-        {view === 'editor' ? (
+        {view === 'editor' && (
           <>
             <TopBar
               title={currentDoc.title}
@@ -171,9 +178,11 @@ function App() {
               saveStatus={saveStatus}
             />
           </>
-        ) : (
+        )}
+        {view === 'settings' && (
           <SettingsPage settings={settings} onSettingsChange={handleSettingsChange} />
         )}
+        {view === 'explore' && <ExplorePage categoryId={settings.categoryId} />}
       </div>
     </div>
   )

@@ -28,6 +28,7 @@ export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) 
             <label>Name</label>
             <input defaultValue="Arman Bance" />
           </div>
+
           <div className="settings-row">
             <label>Email</label>
             <input defaultValue="arman@example.com" />
@@ -56,6 +57,7 @@ export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) 
 
         <section className="settings-section">
           <h2>AI Assistant</h2>
+
           <div className="settings-row">
             <label>Tone</label>
             <select defaultValue="friendly">
@@ -71,6 +73,36 @@ export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) 
           <div className="settings-row settings-row-toggle">
             <label>Save drafts to cloud</label>
             <input type="checkbox" />
+          </div>
+        </section>
+
+        <section className="settings-section">
+          <h2>Explore</h2>
+          <div className="settings-row">
+            {/* video category for the explore page */}
+            <label>Video category</label>
+            <select
+              value={settings.categoryId ?? ''}
+              onChange={(e) => {
+                const val = e.target.value
+                // convert back to null if they pick "all"
+                onSettingsChange({ categoryId: val === '' ? null : Number(val) })
+              }}
+            >
+              <option value="">All (no filter)</option>
+              <option value="1">Film &amp; Animation</option>
+              <option value="2">Autos &amp; Vehicles</option>
+              <option value="10">Music</option>
+              <option value="15">Pets &amp; Animals</option>
+              <option value="17">Sports</option>
+              <option value="20">Gaming</option>
+              <option value="22">People &amp; Blogs</option>
+              <option value="23">Comedy</option>
+              <option value="24">Entertainment</option>
+              <option value="25">News &amp; Politics</option>
+              <option value="26">Howto &amp; Style</option>
+              <option value="28">Science &amp; Technology</option>
+            </select>
           </div>
         </section>
 

@@ -1,15 +1,17 @@
 import { useRef, useState } from 'react'
+import axios from 'axios'
 import type { Doc } from '../types'
-import { uploadMedia } from '../lib/api'
+import { ingestYoutube, uploadMedia } from '../lib/api'
 
 interface SidebarProps {
   docs: Doc[]
   currentDocId: string
-  view: 'editor' | 'settings'
+  view: 'editor' | 'settings' | 'explore'
   creatorUsername: string
   onSelectDoc: (id: string) => void
   onNewDoc: () => void
   onOpenSettings: () => void
+  onOpenExplore: () => void
 }
 
 type UploadStatus =
@@ -26,9 +28,13 @@ export function Sidebar({
   onSelectDoc,
   onNewDoc,
   onOpenSettings,
+  onOpenExplore,
 }: SidebarProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [upload, setUpload] = useState<UploadStatus>({ state: 'idle' })
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+
+  const isBusy = upload.state === 'uploading'
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -42,6 +48,36 @@ export function Sidebar({
       setTimeout(() => setUpload({ state: 'idle' }), 2500)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed'
+      setUpload({ state: 'error', message })
+      setTimeout(() => setUpload({ state: 'idle' }), 4000)
+    }
+  }
+
+  const onYoutubeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const url = youtubeUrl.trim()
+    if (!url || isBusy) return
+    if (!creatorUsername.trim()) {
+      setUpload({ state: 'error', message: 'Set a creator username in Settings first.' })
+      setTimeout(() => setUpload({ state: 'idle' }), 4000)
+      return
+    }
+
+    setUpload({ state: 'uploading', name: url })
+    try {
+      const res = await ingestYoutube(url, creatorUsername)
+      const label = res.video_title || url
+      setUpload({ state: 'success', name: label })
+      setYoutubeUrl('')
+      setTimeout(() => setUpload({ state: 'idle' }), 2500)
+    } catch (err) {
+      let message = 'YouTube ingest failed'
+      if (axios.isAxiosError(err)) {
+        const detail = (err.response?.data as { detail?: string } | undefined)?.detail
+        message = detail || err.message || message
+      } else if (err instanceof Error) {
+        message = err.message
+      }
       setUpload({ state: 'error', message })
       setTimeout(() => setUpload({ state: 'idle' }), 4000)
     }
@@ -93,12 +129,12 @@ export function Sidebar({
         <button
           className="sidebar-item sidebar-upload"
           onClick={() => fileRef.current?.click()}
-          disabled={upload.state === 'uploading'}
+          disabled={isBusy}
         >
           {upload.state === 'uploading' ? (
             <>
               <span className="upload-spinner" aria-hidden="true" />
-              <span>Uploading…</span>
+              <span>Working…</span>
             </>
           ) : (
             <>
@@ -112,9 +148,31 @@ export function Sidebar({
           )}
         </button>
 
+        <form className="sidebar-youtube" onSubmit={onYoutubeSubmit}>
+          <input
+            type="url"
+            className="sidebar-youtube-input"
+            placeholder="Paste YouTube URL"
+            value={youtubeUrl}
+            onChange={(e) => setYoutubeUrl(e.target.value)}
+            disabled={isBusy}
+            aria-label="YouTube URL"
+          />
+          <button
+            type="submit"
+            className="sidebar-youtube-submit"
+            disabled={isBusy || !youtubeUrl.trim()}
+            aria-label="Ingest YouTube video"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M13 5l7 7-7 7" />
+            </svg>
+          </button>
+        </form>
+
         {upload.state === 'success' && (
           <div className="upload-status upload-success" role="status">
-            Uploaded · {upload.name}
+            Added · {upload.name}
           </div>
         )}
         {upload.state === 'error' && (
@@ -122,6 +180,17 @@ export function Sidebar({
             {upload.message}
           </div>
         )}
+
+        <button
+          className={`sidebar-item sidebar-explore ${view === 'explore' ? 'active' : ''}`}
+          onClick={onOpenExplore}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="10 8 16 12 10 16 10 8" />
+          </svg>
+          <span>Explore</span>
+        </button>
 
         <button
           className={`sidebar-item sidebar-settings ${view === 'settings' ? 'active' : ''}`}
