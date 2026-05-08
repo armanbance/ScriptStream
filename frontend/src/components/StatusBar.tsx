@@ -1,8 +1,10 @@
+import type { SaveStatus } from '../types'
+
 interface StatusBarProps {
   words: number
   chars: number
   readMinutes: number
-  saveStatus: 'idle' | 'saving' | 'saved'
+  saveStatus: SaveStatus
 }
 
 export function StatusBar({ words, chars, readMinutes, saveStatus }: StatusBarProps) {
@@ -18,6 +20,7 @@ export function StatusBar({ words, chars, readMinutes, saveStatus }: StatusBarPr
       <div className="statusbar-right">
         {saveStatus === 'saving' && 'Saving…'}
         {saveStatus === 'saved' && 'All changes saved'}
+        {saveStatus === 'error' && 'Save failed'}
       </div>
     </footer>
   )

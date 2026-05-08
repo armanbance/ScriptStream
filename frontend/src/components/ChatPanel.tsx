@@ -4,20 +4,14 @@ import type { ChatMessage as ChatMessageType } from '../hooks/useChat'
 
 interface ChatPanelProps {
   messages: ChatMessageType[]
-  isThinking: boolean
+  isStreaming: boolean
   onSend: (content: string) => void
   onInsert: (content: string) => void
+  onClear: () => void
 }
 
-const SUGGESTIONS = [
-  'Rewrite my intro to be punchier',
-  'Give me 5 B-roll ideas',
-  'Suggest a strong hook',
-  'Tighten this script',
-]
-
 export const ChatPanel = forwardRef<HTMLTextAreaElement, ChatPanelProps>(
-  function ChatPanel({ messages, isThinking, onSend, onInsert }, ref) {
+  function ChatPanel({ messages, isStreaming, onSend, onInsert, onClear }, ref) {
     const [draft, setDraft] = useState('')
     const listRef = useRef<HTMLDivElement>(null)
     const localRef = useRef<HTMLTextAreaElement | null>(null)
@@ -26,7 +20,7 @@ export const ChatPanel = forwardRef<HTMLTextAreaElement, ChatPanelProps>(
       const el = listRef.current
       if (!el) return
       el.scrollTop = el.scrollHeight
-    }, [messages, isThinking])
+    }, [messages, isStreaming])
 
     useEffect(() => {
       const el = localRef.current
@@ -43,15 +37,13 @@ export const ChatPanel = forwardRef<HTMLTextAreaElement, ChatPanelProps>(
 
     const submit = () => {
       const value = draft.trim()
-      if (!value || isThinking) return
+      if (!value || isStreaming) return
       onSend(value)
       setDraft('')
     }
 
-    const handleSuggestion = (text: string) => {
-      if (isThinking) return
-      onSend(text)
-    }
+    const lastMessage = messages[messages.length - 1]
+    const showTyping = isStreaming && lastMessage?.role === 'assistant' && !lastMessage.content
 
     return (
       <aside className="chat" aria-label="AI assistant">
@@ -60,35 +52,41 @@ export const ChatPanel = forwardRef<HTMLTextAreaElement, ChatPanelProps>(
             <span className="chat-dot" />
             AI Assistant
           </div>
-          <span className="chat-hint">⌘J</span>
+          <div className="chat-header-actions">
+            {messages.length > 0 && (
+              <button
+                className="chat-clear-btn"
+                onClick={onClear}
+                disabled={isStreaming}
+                aria-label="Clear conversation"
+                title="Clear conversation"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                </svg>
+              </button>
+            )}
+            <span className="chat-hint">⌘J</span>
+          </div>
         </div>
 
         <div className="chat-list" ref={listRef}>
-          {messages.length === 0 && !isThinking && (
+          {messages.length === 0 && !isStreaming && (
             <div className="chat-empty">
-              <p className="chat-empty-title">Need a second brain?</p>
+              <p className="chat-empty-title">Need help with your script?</p>
               <p className="chat-empty-sub">
-                Ask for B-roll ideas, hooks, rewrites, or feedback on what you've written.
+                Ask for ideas, hooks, rewrites, feedback, or say &ldquo;generate a script about...&rdquo; to create one.
               </p>
-              <div className="suggestions">
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    className="suggestion"
-                    onClick={() => handleSuggestion(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
             </div>
           )}
 
-          {messages.map((m) => (
-            <ChatMessage key={m.id} message={m} onInsert={onInsert} />
-          ))}
+          {messages.map((m) =>
+            m.role === 'assistant' && !m.content ? null : (
+              <ChatMessage key={m.id} message={m} onInsert={onInsert} />
+            ),
+          )}
 
-          {isThinking && (
+          {showTyping && (
             <div className="msg msg-assistant msg-thinking">
               <div className="msg-role">Assistant</div>
               <div className="typing">
@@ -102,7 +100,7 @@ export const ChatPanel = forwardRef<HTMLTextAreaElement, ChatPanelProps>(
           <textarea
             ref={setRefs}
             className="composer-input"
-            placeholder="Ask anything — Cmd+Enter to send"
+            placeholder="Ask anything — Enter to send"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -112,12 +110,12 @@ export const ChatPanel = forwardRef<HTMLTextAreaElement, ChatPanelProps>(
               }
             }}
             rows={1}
-            disabled={isThinking}
+            disabled={isStreaming}
           />
           <button
             className="send-btn"
             onClick={submit}
-            disabled={!draft.trim() || isThinking}
+            disabled={!draft.trim() || isStreaming}
             aria-label="Send message"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

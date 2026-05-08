@@ -3,15 +3,21 @@ import json
 import logging
 import os
 import tempfile
+from typing import Any
 from pathlib import Path
 
-from fastapi import APIRouter, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
+from starlette.responses import StreamingResponse
+
+from auth.dependencies import get_current_user
+from services.chat_assistant import stream_chat
 from services.media_processor import extract_audio
 from services.youtube_trending import fetch_trending, TrendingFetchError
 from services.transcriber import transcribe_audio
 from services.rag_engine import ingest_transcript
+from services.directing_assistant import DirectingPlan, generate_directing_plan
 from services.script_generator import generate_script
 from services.youtube_ingest import (
     CaptionsUnavailable,
@@ -30,6 +36,27 @@ class ScriptRequest(BaseModel):
     creator_username: str
     length_hint: str | None = None
     temperature: float = 0.7
+
+
+class DirectingPlanRequest(BaseModel):
+    script: str
+    creator_username: str
+    platform: str | None = None
+    duration_hint: str | None = None
+    style: str | None = None
+    temperature: float = 0.4
+
+
+class ChatMessageIn(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessageIn]
+    creator_username: str
+    editor_content: str | None = None
+
 
 class IngestYoutubeRequest(BaseModel):
     url: str
@@ -51,6 +78,7 @@ def root() -> dict[str, str]:
 async def upload_video(
     file: UploadFile,
     creator_username: str = Form(...),
+    _user: dict[str, Any] = Depends(get_current_user),
 ) -> dict[str, str]:
     with tempfile.TemporaryDirectory() as tmpdir:
         temp_video = os.path.join(tmpdir, "video.mp4")
@@ -118,7 +146,10 @@ async def ingest_youtube(body: IngestYoutubeRequest) -> dict[str, str]:
 
 
 @router.post("/generate-script")
-async def generate_script_endpoint(body: ScriptRequest) -> dict[str, str]:
+async def generate_script_endpoint(
+    body: ScriptRequest,
+    _user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, str]:
     try:
         script = await asyncio.to_thread(
             generate_script,
@@ -132,6 +163,60 @@ async def generate_script_endpoint(body: ScriptRequest) -> dict[str, str]:
         raise HTTPException(status_code=500, detail=f"Script generation failed: {e}")
 
     return {"script": script}
+
+
+@router.post("/chat")
+async def chat_endpoint(
+    body: ChatRequest,
+    _user: dict[str, Any] = Depends(get_current_user),
+) -> StreamingResponse:
+    messages = [{"role": m.role, "content": m.content} for m in body.messages]
+
+    def generate():
+        try:
+            yield from stream_chat(
+                messages,
+                body.creator_username,
+                editor_content=body.editor_content,
+            )
+        except Exception as e:
+            logger.exception("Chat stream failed")
+            import json as _json
+            yield f"data: {_json.dumps({'type': 'error', 'detail': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.post("/generate-directing-notes")
+async def generate_directing_notes_endpoint(
+    body: DirectingPlanRequest,
+    _user: dict[str, Any] = Depends(get_current_user),
+) -> DirectingPlan:
+    try:
+        return await asyncio.to_thread(
+            generate_directing_plan,
+            body.script,
+            body.creator_username,
+            platform=body.platform,
+            duration_hint=body.duration_hint,
+            style=body.style,
+            temperature=body.temperature,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("Directing plan generation failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Directing plan generation failed: {e}",
+        )
 
 
 # path to the cached json file

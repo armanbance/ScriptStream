@@ -4,6 +4,8 @@ export interface Doc {
   content: string
 }
 
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+
 // settings are stored in localstorage
 export interface Settings {
   creatorUsername: string

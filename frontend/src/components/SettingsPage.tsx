@@ -1,14 +1,35 @@
+import type { User } from '@supabase/supabase-js'
 import type { Settings } from '../types'
+import {
+  formatCreatorUsername,
+  getUserAvatarUrl,
+  getUserDisplayName,
+  getUserInitials,
+} from '../lib/userProfile'
+import { EXPLORE_CATEGORIES } from '../lib/exploreCategories'
 
 interface SettingsPageProps {
   settings: Settings
   onSettingsChange: (patch: Partial<Settings>) => void
+  onBack: () => void
+  user: User | null
 }
 
-export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) {
+export function SettingsPage({ settings, onSettingsChange, onBack, user }: SettingsPageProps) {
+  const displayName = getUserDisplayName(user)
+  const avatarUrl = getUserAvatarUrl(user)
+
   return (
     <div className="settings-page">
       <div className="settings-inner">
+        <button className="settings-back" onClick={onBack}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
+
         <h1 className="settings-heading">Settings</h1>
         <p className="settings-lede">
           Manage your account, appearance, and AI preferences.
@@ -16,22 +37,41 @@ export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) 
 
         <section className="settings-section">
           <h2>Profile</h2>
+          <div className="settings-profile-card">
+            {avatarUrl ? (
+              <img className="profile-avatar profile-avatar-large" src={avatarUrl} alt="" />
+            ) : (
+              <div className="profile-avatar profile-avatar-large" aria-hidden="true">
+                {getUserInitials(user)}
+              </div>
+            )}
+            <div>
+              <div className="settings-profile-name">{displayName}</div>
+              <div className="settings-profile-meta">
+                {formatCreatorUsername(settings.creatorUsername) || user?.email}
+              </div>
+            </div>
+          </div>
           <div className="settings-row">
             <label>Creator Username</label>
             <input
               value={settings.creatorUsername}
-              onChange={(e) => onSettingsChange({ creatorUsername: e.target.value })}
+              onChange={(e) => {
+                const creatorUsername = e.target.value.trimStart().replace(/^@+/, '')
+                onSettingsChange({ creatorUsername })
+              }}
               placeholder="your-username"
+              autoComplete="username"
             />
           </div>
           <div className="settings-row">
             <label>Name</label>
-            <input defaultValue="Arman Bance" />
+            <input value={displayName} readOnly />
           </div>
 
           <div className="settings-row">
             <label>Email</label>
-            <input defaultValue="arman@example.com" />
+            <input value={user?.email ?? ''} readOnly />
           </div>
         </section>
 
@@ -90,18 +130,11 @@ export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) 
               }}
             >
               <option value="">All (no filter)</option>
-              <option value="1">Film &amp; Animation</option>
-              <option value="2">Autos &amp; Vehicles</option>
-              <option value="10">Music</option>
-              <option value="15">Pets &amp; Animals</option>
-              <option value="17">Sports</option>
-              <option value="20">Gaming</option>
-              <option value="22">People &amp; Blogs</option>
-              <option value="23">Comedy</option>
-              <option value="24">Entertainment</option>
-              <option value="25">News &amp; Politics</option>
-              <option value="26">Howto &amp; Style</option>
-              <option value="28">Science &amp; Technology</option>
+              {EXPLORE_CATEGORIES.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.label}
+                </option>
+              ))}
             </select>
           </div>
         </section>

@@ -7,3 +7,4 @@ pinecone==6.0.0
 python-dotenv==1.2.2
 youtube-transcript-api>=1.0.3,<2.0.0
 requests>=2.32.0,<3.0.0
+PyJWT[crypto]==2.9.0

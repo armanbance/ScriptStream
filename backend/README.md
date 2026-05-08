@@ -8,6 +8,7 @@ FastAPI server that handles video ingestion, transcription (OpenAI Whisper), RAG
 - **FFmpeg** — required for extracting audio from uploaded videos
 - An **OpenAI API key** (for Whisper transcription and script generation)
 - A **Pinecone API key** (for vector storage / RAG retrieval)
+- A **Supabase project URL** configured with Auth JWT signing keys
 
 ### Installing FFmpeg
 
@@ -72,12 +73,15 @@ Open `.env` and set the required values:
 OPENAI_API_KEY=sk-...
 PINECONE_API_KEY=...
 PINECONE_ENVIRONMENT=...
+SUPABASE_URL=https://your-project-ref.supabase.co
 
 # Optional — defaults shown
 HOST=0.0.0.0
 PORT=8000
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 GENERATION_MODEL=gpt-4o
+# SUPABASE_JWT_ISSUER=https://your-project-ref.supabase.co/auth/v1
+# SUPABASE_JWKS_URL=https://your-project-ref.supabase.co/auth/v1/.well-known/jwks.json
 ```
 
 ### 6. Start the development server
@@ -94,13 +98,14 @@ The API will be available at **http://localhost:8000**. The server runs with hot
 |--------|------|-------------|
 | `GET` | `/api/health` | Health check |
 | `GET` | `/api/` | Service info |
-| `POST` | `/api/upload-video` | Upload a video file for transcription and RAG ingestion |
-| `POST` | `/api/generate-script` | Generate a script for a given topic and creator |
+| `POST` | `/api/upload-video` | Upload a video file for transcription and RAG ingestion; requires Supabase bearer token |
+| `POST` | `/api/generate-script` | Generate a script for a given topic and creator; requires Supabase bearer token |
 
 ### Upload Video
 
 ```bash
 curl -X POST http://localhost:8000/api/upload-video \
+  -H "Authorization: Bearer <supabase-access-token>" \
   -F "file=@video.mp4" \
   -F "creator_username=your_username"
 ```
@@ -109,6 +114,7 @@ curl -X POST http://localhost:8000/api/upload-video \
 
 ```bash
 curl -X POST http://localhost:8000/api/generate-script \
+  -H "Authorization: Bearer <supabase-access-token>" \
   -H "Content-Type: application/json" \
   -d '{
     "topic": "How to learn Python",
