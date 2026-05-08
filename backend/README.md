@@ -75,13 +75,6 @@ PINECONE_API_KEY=...
 PINECONE_ENVIRONMENT=...
 SUPABASE_URL=https://your-project-ref.supabase.co
 
-# Optional — defaults shown
-HOST=0.0.0.0
-PORT=8000
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-GENERATION_MODEL=gpt-4o
-# SUPABASE_JWT_ISSUER=https://your-project-ref.supabase.co/auth/v1
-# SUPABASE_JWKS_URL=https://your-project-ref.supabase.co/auth/v1/.well-known/jwks.json
 ```
 
 ### 6. Start the development server
@@ -90,16 +83,8 @@ GENERATION_MODEL=gpt-4o
 python main.py
 ```
 
-The API will be available at **http://localhost:8000**. The server runs with hot-reload enabled, so code changes are picked up automatically.
+The backend server will be available at **http://localhost:8000**.
 
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/health` | Health check |
-| `GET` | `/api/` | Service info |
-| `POST` | `/api/upload-video` | Upload a video file for transcription and RAG ingestion; requires Supabase bearer token |
-| `POST` | `/api/generate-script` | Generate a script for a given topic and creator; requires Supabase bearer token |
 
 ### Upload Video
 
@@ -124,19 +109,3 @@ curl -X POST http://localhost:8000/api/generate-script \
   }'
 ```
 
-## Project Structure
-
-```
-backend/
-├── main.py                  # App entrypoint & CORS config
-├── requirements.txt         # Python dependencies
-├── .env.example             # Environment variable template
-├── api/
-│   └── routes.py            # API route definitions
-└── services/
-    ├── media_processor.py   # FFmpeg audio extraction
-    ├── transcriber.py       # OpenAI Whisper transcription
-    ├── rag_engine.py        # Pinecone vector ingestion & retrieval
-    ├── script_generator.py  # AI script generation
-    └── voice_profile.py     # Creator voice profile analysis
-```
