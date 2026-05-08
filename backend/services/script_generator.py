@@ -1,5 +1,3 @@
-"""Retrieval-augmented script generation using Pinecone and OpenAI."""
-
 import os
 
 from openai import OpenAI
@@ -76,7 +74,6 @@ def _build_user_prompt(topic: str, length_hint: str | None = None) -> str:
 
 
 def _fetch_style_examples(creator_username: str, limit: int = 5) -> list[str]:
-    """Retrieve a diverse sample of the creator's chunks to serve as few-shot style examples."""
     dummy_vector = [0.0] * EMBEDDING_DIMENSIONS
 
     results = index.query(
@@ -94,7 +91,6 @@ def _fetch_style_examples(creator_username: str, limit: int = 5) -> list[str]:
         for match in (results.matches or [])
         if match.metadata and "text" in match.metadata
     ]
-    # Take every other chunk for variety
     return chunks[::2][:limit]
 
 
@@ -104,8 +100,6 @@ def generate_script(
     length_hint: str | None = None,
     temperature: float = 0.6,
 ) -> str:
-    """Query Pinecone for relevant transcript chunks and generate a script."""
-
     voice_profile = get_voice_profile(creator_username)
 
     embed_response = openai_client.embeddings.create(

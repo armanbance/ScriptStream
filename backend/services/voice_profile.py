@@ -1,5 +1,3 @@
-"""Build, store, and retrieve per-creator voice profiles in Pinecone."""
-
 import logging
 import os
 
@@ -71,8 +69,6 @@ def _profile_id(creator_username: str) -> str:
 
 
 def build_voice_profile(creator_username: str) -> str:
-    """Fetch a creator's transcript chunks from Pinecone and distill a voice profile."""
-
     dummy_vector = [0.0] * EMBEDDING_DIMENSIONS
 
     results = index.query(
@@ -109,8 +105,6 @@ def build_voice_profile(creator_username: str) -> str:
 
 
 def store_voice_profile(creator_username: str, profile_text: str) -> None:
-    """Embed and upsert the voice profile as a single Pinecone record."""
-
     if not profile_text:
         return
 
@@ -137,8 +131,6 @@ def store_voice_profile(creator_username: str, profile_text: str) -> None:
 
 
 def get_voice_profile(creator_username: str) -> str | None:
-    """Retrieve the stored voice profile for a creator, or None if absent."""
-
     result = index.fetch(ids=[_profile_id(creator_username)])
 
     vectors = result.vectors or {}

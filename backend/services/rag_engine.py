@@ -1,5 +1,3 @@
-"""RAG pipeline: chunk transcripts, embed with OpenAI, and store in Pinecone."""
-
 import logging
 import os
 import re
@@ -31,12 +29,6 @@ def _word_count(text: str) -> int:
 def chunk_text(
     text: str, segments: list[dict[str, Any]] | None = None
 ) -> list[str]:
-    """Split text into ~150-word chunks with sentence-level overlap.
-
-    Prefers Whisper segments when available, falling back to regex
-    sentence-boundary splitting on the raw text. Each chunk overlaps
-    the previous by OVERLAP_SENTENCES sentences for continuity.
-    """
     pieces: list[str] = []
 
     if segments:
@@ -76,7 +68,6 @@ def chunk_text(
 
 
 def _batch_embed(texts: list[str]) -> list[list[float]]:
-    """Embed multiple texts in a single API call."""
     response = openai_client.embeddings.create(
         model=EMBEDDING_MODEL,
         input=texts,
@@ -88,7 +79,6 @@ def _batch_embed(texts: list[str]) -> list[list[float]]:
 def ingest_transcript(
     transcript_data: dict[str, Any], creator_username: str
 ) -> None:
-    """Embed transcript chunks and upsert them into Pinecone."""
     text = transcript_data.get("text", "")
     segments = transcript_data.get("segments")
 

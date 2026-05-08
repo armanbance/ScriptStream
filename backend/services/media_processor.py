@@ -1,18 +1,7 @@
-"""Audio/video ingest and preprocessing using FFmpeg."""
-
 import ffmpeg
 
 
 def extract_audio(video_path: str, output_audio_path: str) -> bool:
-    """Extract the audio track from an .mp4 file and save it as .mp3.
-
-    Args:
-        video_path: Path to the input .mp4 file.
-        output_audio_path: Path for the output .mp3 file.
-
-    Returns:
-        True if extraction succeeded, False otherwise.
-    """
     try:
         (
             ffmpeg

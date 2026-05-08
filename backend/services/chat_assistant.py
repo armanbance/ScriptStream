@@ -1,5 +1,3 @@
-"""Conversational chat assistant with tool-calling for script generation."""
-
 import json
 import logging
 import os
@@ -71,7 +69,6 @@ def _build_messages(
     creator_username: str,
     editor_content: str | None,
 ) -> list[dict]:
-    """Prepend the system prompt (with optional editor context) to the conversation."""
     system = _SYSTEM_PROMPT
 
     if editor_content and editor_content.strip():
@@ -89,10 +86,6 @@ def stream_chat(
     creator_username: str,
     editor_content: str | None = None,
 ) -> Generator[str, None, None]:
-    """Stream a chat response, handling tool calls for script generation.
-
-    Yields SSE-formatted lines: 'data: {"type": "token", "content": "..."}\n\n'
-    """
     full_messages = _build_messages(messages, creator_username, editor_content)
 
     stream = openai_client.chat.completions.create(

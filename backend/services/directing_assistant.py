@@ -1,5 +1,3 @@
-"""Structured directing guidance generation for accepted scripts."""
-
 import json
 import os
 
@@ -123,8 +121,6 @@ def generate_directing_plan(
     style: str | None = None,
     temperature: float = 0.4,
 ) -> DirectingPlan:
-    """Generate structured filming guidance for an accepted script."""
-
     trimmed_script = script.strip()
     if not trimmed_script:
         raise ValueError("Script is required")

@@ -63,7 +63,6 @@ class IngestYoutubeRequest(BaseModel):
     creator_username: str
 
 
-# health check, just returns ok
 @router.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -88,7 +87,6 @@ async def upload_video(
         with open(temp_video, "wb") as f:
             f.write(contents)
 
-        # extract the audio track before we try to transcribe
         success = await asyncio.to_thread(extract_audio, temp_video, temp_audio)
         if not success:
             raise HTTPException(status_code=500, detail="Audio extraction failed")
@@ -99,7 +97,6 @@ async def upload_video(
             logger.exception("Transcription failed")
             raise HTTPException(status_code=500, detail=f"Transcription failed: {e}")
 
-        # finally store it in the vector db
         try:
             await asyncio.to_thread(ingest_transcript, transcript, creator_username)
         except Exception as e:
@@ -111,13 +108,11 @@ async def upload_video(
 
 @router.post("/ingest-youtube")
 async def ingest_youtube(body: IngestYoutubeRequest) -> dict[str, str]:
-    # parses the url and gets the video id first
     try:
         video_id = parse_video_id(body.url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # if captions aren't available we return a 422
     try:
         transcript = await asyncio.to_thread(fetch_captions, video_id)
     except CaptionsUnavailable as e:
@@ -129,7 +124,6 @@ async def ingest_youtube(body: IngestYoutubeRequest) -> dict[str, str]:
         logger.exception("Caption fetch failed")
         raise HTTPException(status_code=500, detail=f"Caption fetch failed: {e}")
 
-    # grabs the title separately, best effort
     title = await asyncio.to_thread(fetch_video_title, video_id)
 
     try:
@@ -219,7 +213,6 @@ async def generate_directing_notes_endpoint(
         )
 
 
-# path to the cached json file
 TRENDING_JSON_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "trending.json"
 )
@@ -229,7 +222,6 @@ TRENDING_JSON_PATH = (
 def get_trending(
     category_id: int | None = Query(None, alias="category_id"),
 ) -> dict[str, list[dict]]:
-    # when category_id is given, fetch live from youtube instead of reading the file
     if category_id is not None:
         try:
             videos = fetch_trending(max_results=5, category_id=category_id)
@@ -237,7 +229,6 @@ def get_trending(
             raise HTTPException(status_code=502, detail=str(e))
         return {"videos": videos}
 
-    # fall back to the json file if no category specified
     if not TRENDING_JSON_PATH.exists():
         return {"videos": []}
     try:
